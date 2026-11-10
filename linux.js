@@ -30,6 +30,32 @@ function layout() {
 
 var term = null;
 
+// The guest was told its size once (stty), so on resize keep rows and columns
+// and only rescale the font to fit both width and height.
+function refit() {
+  if (!term) return;
+  var style = getComputedStyle(termEl);
+  var width = termEl.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+  var height = termEl.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+  // Measure the rendered cell per font pixel instead of guessing the ratio.
+  var screen = termEl.querySelector(".xterm-screen");
+  var current = term.options.fontSize;
+  if (!screen || !screen.offsetWidth || !screen.offsetHeight) return;
+  var cellW = screen.offsetWidth / term.cols / current;
+  var cellH = screen.offsetHeight / term.rows / current;
+  var byWidth = Math.floor(width / term.cols / cellW);
+  var byHeight = Math.floor(height / term.rows / cellH);
+  var fontSize = Math.max(7, Math.min(16, byWidth, byHeight));
+  if (term.options.fontSize !== fontSize) term.options.fontSize = fontSize;
+}
+
+var refitPending = false;
+window.addEventListener("resize", function () {
+  if (refitPending) return;
+  refitPending = true;
+  requestAnimationFrame(function () { refitPending = false; refit(); });
+});
+
 // v86 builds the terminal itself; the documented hook is xterm_lib, so a
 // subclass adds the journal's palette and the size.
 function JournalTerminal(options) {
@@ -147,7 +173,7 @@ function mountJournal(emulator, journal) {
       // The buildroot image already mounts host9p on /mnt; mount only if not.
       "(grep -q ' /mnt 9p' /proc/mounts || mount -t 9p -o trans=virtio,version=9p2000.L host9p /mnt)" +
       " && ln -sfn /mnt /journal && cd /journal" +
-      " && for f in *__*; do d=${f%%__*}; mkdir -p $d; mv \"$f\" \"$d/${f#*__}\"; done;" +
+      " && for f in *__*; do d=${f%%__*}; mkdir -p \"$d\"; mv \"$f\" \"$d/${f#*__}\"; done;" +
       " stty rows " + rows + " cols " + COLS + ";" +
       " alias exit='echo \"back to the journal: " + JOURNAL_URL + "\"';" +
       " clear; cat README.txt\n"
