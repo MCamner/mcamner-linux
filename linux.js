@@ -83,6 +83,14 @@ function JournalTerminal(options) {
       white: "#f7f3ed", brightWhite: "#ffffff"
     }
   }));
+  // v86 writes the serial console one byte at a time, and xterm.js 6 drops
+  // three-byte UTF-8 split that way (—, →, “ ”). Decode as a stream first.
+  var decoder = new TextDecoder();
+  var write = term.write.bind(term);
+  term.write = function (data, callback) {
+    if (data instanceof Uint8Array) data = decoder.decode(data, { stream: true });
+    return write(data, callback);
+  };
   return term;
 }
 
