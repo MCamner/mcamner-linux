@@ -1,0 +1,21 @@
+# Variant B, 6.18.7 without stack protector. Buildroot defconfig for the mcamner-linux guest. Built by
+# .github/workflows/kernel.yml from Buildroot 2026.02.3 with this directory
+# copied to board/mcamner/. Based on configs/qemu_x86_defconfig.
+BR2_x86_pentiumpro=y
+BR2_PACKAGE_HOST_LINUX_HEADERS_CUSTOM_6_18=y
+BR2_TOOLCHAIN_BUILDROOT_MUSL=y
+BR2_GLOBAL_PATCH_DIR="board/qemu/patches"
+BR2_DOWNLOAD_FORCE_CHECK_HASHES=y
+BR2_TARGET_GENERIC_HOSTNAME="journal"
+BR2_TARGET_GENERIC_ISSUE="McAmner Journal linux"
+# BR2_TARGET_GENERIC_GETTY is not set
+BR2_ROOTFS_OVERLAY="board/mcamner/rootfs_overlay"
+BR2_LINUX_KERNEL=y
+BR2_LINUX_KERNEL_CUSTOM_VERSION=y
+BR2_LINUX_KERNEL_CUSTOM_VERSION_VALUE="6.18.7"
+BR2_LINUX_KERNEL_USE_CUSTOM_CONFIG=y
+BR2_LINUX_KERNEL_CUSTOM_CONFIG_FILE="board/qemu/x86/linux.config"
+BR2_LINUX_KERNEL_CONFIG_FRAGMENT_FILES="board/mcamner/linux.fragment board/mcamner/nossp.fragment"
+BR2_TARGET_ROOTFS_CPIO=y
+BR2_TARGET_ROOTFS_INITRAMFS=y
+# BR2_TARGET_ROOTFS_TAR is not set
