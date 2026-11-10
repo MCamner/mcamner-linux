@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>linux — McAmner Journal</title>
+  <meta name="description" content="A real Linux booting in your browser, with the McAmner Journal mounted as plain text files. Runs locally in WebAssembly; nothing leaves the tab.">
+  <meta name="author" content="Mattias Camner">
+  <meta name="robots" content="noindex, follow">
+  <link rel="canonical" href="https://mcamner.github.io/mcamner-linux/">
+  <link rel="icon" type="image/svg+xml" href="https://mcamner.github.io/mcamner-journal/favicon.svg">
+  <link rel="stylesheet" href="vendor/xterm/xterm.css">
+  <script>
+    // Same origin as the journal, so /theme carries over. Mirrors site.js.
+    try {
+      var theme = localStorage.getItem("mcj:theme");
+      if (theme && theme !== "default") document.documentElement.dataset.theme = theme;
+    } catch (e) {}
+  </script>
+  <style>
+    :root {
+      --blue: #2f69c7;
+      --blue-dark: #0d438f;
+      --term: #123b80;
+      --orange: #e57b4f;
+      --white: #f7f3ed;
+      --muted: #c9c1b4;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background: linear-gradient(180deg, var(--blue), var(--blue-dark));
+      color: var(--white);
+      font: 15px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    main {
+      height: 100%;
+      width: min(100% - 32px, 1100px);
+      margin: 0 auto;
+      padding: 20px 0 16px;
+      display: flex;
+      flex-direction: column;
+    }
+    fieldset {
+      flex: 1;
+      min-height: 0;
+      margin: 0;
+      padding: 14px 16px 12px;
+      border: 2px solid var(--orange);
+      border-top-width: 3px;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.2);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    legend { padding: 0 8px; color: var(--orange); font-weight: 700; }
+    legend span { color: var(--white); font-weight: 400; }
+    h1 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    #status { margin: 0; color: var(--muted); min-height: 1.45em; white-space: pre-wrap; }
+    #status.is-error { color: var(--orange); }
+    #term {
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+      border-radius: 4px;
+      background: var(--term);
+      padding: 6px;
+    }
+    #term .xterm { height: 100%; }
+    #term .xterm:focus-within { outline: 2px solid var(--orange); outline-offset: 4px; }
+    footer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 4px 16px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    a { color: var(--white); text-underline-offset: 3px; }
+    a:hover, a:focus-visible { color: var(--orange); }
+    a:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+
+    /* Phosphor themes, copied from the journal's style.css. */
+    html[data-theme="amber"] { filter: grayscale(1) sepia(1) saturate(3.2) hue-rotate(-14deg) brightness(0.82) contrast(1.25); }
+    html[data-theme="green"] { filter: grayscale(1) sepia(1) saturate(3.2) hue-rotate(70deg) brightness(0.8) contrast(1.25); }
+    html[data-theme="mono"]  { filter: grayscale(1) contrast(1.12); }
+
+    @media (max-width: 600px) {
+      main { padding: 12px 0 10px; }
+      fieldset { padding: 10px 8px 8px; }
+      #term { padding: 2px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Linux in the browser, with the journal mounted</h1>
+    <fieldset>
+      <legend>McAmner Journal <span>linux</span></legend>
+      <p id="status" role="status">&gt; boot: starting …</p>
+      <div id="term"></div>
+      <footer>
+        <a href="https://mcamner.github.io/mcamner-journal/">back to the journal</a>
+        <span>runs in this tab · no network · nothing is saved</span>
+      </footer>
+    </fieldset>
+  </main>
+
+  <script src="vendor/xterm/xterm.js"></script>
+  <script src="vendor/v86/libv86.js"></script>
+  <script src="linux.js"></script>
+</body>
+</html>
