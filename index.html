@@ -68,7 +68,8 @@
       padding: 6px;
     }
     #term .xterm { height: 100%; }
-    #term .xterm:focus-within { outline: 2px solid var(--orange); outline-offset: 4px; }
+    /* On the container, not .xterm: #term clips its children. */
+    #term:focus-within { outline: 2px solid var(--orange); outline-offset: 2px; }
     footer {
       display: flex;
       flex-wrap: wrap;
