@@ -9,7 +9,9 @@ Live: https://mcamner.github.io/mcamner-linux/
 ## How it works
 
 - [v86](https://github.com/copy/v86) emulates an x86 machine in WebAssembly
-  and boots a small Buildroot Linux on its serial console.
+  and boots a small Linux on its serial console. The kernel and its root
+  filesystem are built here from `buildroot/` by the `kernel` workflow, which
+  publishes each image as a release together with its full source.
   [xterm.js](https://xtermjs.org/) draws that console.
 - The page fetches `/mcamner-journal/journal-text.json`, which the journal's
   generator writes from its posts. Each entry becomes a file in the
@@ -23,7 +25,7 @@ Everything runs in the visitor's tab. There is no network inside the guest,
 no backend, and nothing is saved between visits.
 
 Why a separate repository: the kernel image and the emulator are about
-12 MB of binaries. Keeping them here keeps the journal's history small, and
+8 MB of binaries. Keeping them here keeps the journal's history small, and
 this history can be rewritten when the binaries change.
 
 ## Run locally

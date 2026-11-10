@@ -10,3 +10,7 @@ CONFIG_CMDLINE="console=ttyS0"
 # CONFIG_SOUND is not set
 # CONFIG_DRM is not set
 # CONFIG_USB_SUPPORT is not set
+# 6.18 with the stack protector panics under v86 right after /init
+# ("Kernel stack is corrupted in: __schedule"). The guest is sandboxed in a
+# browser tab with no network, so the protector is left out.
+# CONFIG_STACKPROTECTOR is not set

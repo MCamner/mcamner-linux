@@ -89,7 +89,7 @@ function start(journal) {
     wasm_path: "vendor/v86/v86.wasm",
     bios: { url: "vendor/v86/seabios.bin" },
     vga_bios: { url: "vendor/v86/vgabios.bin" },
-    bzimage: { url: "vendor/v86/buildroot-bzimage68.bin", async: false },
+    bzimage: { url: "vendor/v86/mcamner-bzimage.bin", async: false },
     filesystem: {},
     cmdline: "tsc=reliable mitigations=off random.trust_cpu=on",
     memory_size: 128 * 1024 * 1024,
