@@ -21,6 +21,12 @@ Live: https://mcamner.github.io/mcamner-linux/
   why the fetch needs no CORS and why `/theme` in the journal carries over:
   the page reads the same `mcj:theme` key.
 
+- A link with an entry's path as the fragment,
+  `https://mcamner.github.io/mcamner-linux/#films/006-stalker.txt`, boots
+  and opens that entry in `less`; `q` leaves the shell in `/journal`. Only
+  a path that exists in the journal is accepted, never a command; anything
+  else boots as usual.
+
 Everything runs in the visitor's tab. There is no network inside the guest,
 no backend, and nothing is saved between visits.
 

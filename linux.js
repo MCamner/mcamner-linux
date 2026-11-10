@@ -159,8 +159,10 @@ function start(journal) {
     // Off v86's I/O call stack, and any throw lands in the error handler.
     Promise.resolve().then(function () {
       return mountJournal(emulator, journal);
-    }).then(function () {
-      status("ready. type below; the journal is in /journal.");
+    }).then(function (entry) {
+      status(entry
+        ? "ready. opened " + entry + " (q closes it); the journal is in /journal."
+        : "ready. type below; the journal is in /journal.");
       if (term) term.focus();
     }, function () {
       status("linux is up, but the journal could not be mounted.", true);
@@ -187,9 +189,19 @@ function safePath(path) {
   });
 }
 
+// A deep link, #films/006-stalker.txt, opens that entry once Linux is up.
+// Only an exact path from the journal is accepted, never a command.
+function linkedEntry(files) {
+  var path;
+  try { path = decodeURIComponent(location.hash.slice(1)); } catch (e) { return null; }
+  if (!path || path.indexOf("'") !== -1) return null;
+  return files.some(function (f) { return f.path === path; }) ? path : null;
+}
+
 function mountJournal(emulator, journal) {
   var encoder = new TextEncoder();
   var files = (journal ? journal.files : []).filter(function (f) { return safePath(f.path); });
+  var entry = linkedEntry(files);
   var writes = files.map(function (f) {
     var cut = f.path.lastIndexOf("/");
     if (cut > 0) ensureDir(emulator.fs9p, f.path.slice(0, cut));
@@ -205,8 +217,10 @@ function mountJournal(emulator, journal) {
       " && ln -sfn /mnt /journal && cd /journal;" +
       " stty rows " + rows + " cols " + COLS + ";" +
       " alias exit='echo \"back to the journal: " + JOURNAL_URL + "\"';" +
-      " clear; cat README.txt\n"
+      // A linked entry opens in less; quitting it leaves the README and prompt.
+      " clear;" + (entry ? " less -- '" + entry + "'; clear;" : "") + " cat README.txt\n"
     );
+    return entry;
   });
 }
 
