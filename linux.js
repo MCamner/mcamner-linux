@@ -157,13 +157,32 @@ function start(journal) {
   });
 }
 
-// create_file does not create directories, so files land flat as
-// "films__006-stalker.txt" and the guest sorts them into folders.
+// create_file does not create directories. emulator.fs9p is v86's internal
+// filesystem (not public API, but v86 is vendored at a fixed version), so the
+// folders are made there first, at any depth. Returns the directory's inode.
+function ensureDir(fs, dir) {
+  if (!dir) return 0; // the 9p root
+  var found = fs.SearchPath(dir);
+  if (found.id !== -1) return found.id;
+  var cut = dir.lastIndexOf("/");
+  var parent = ensureDir(fs, cut < 0 ? "" : dir.slice(0, cut));
+  return fs.CreateDirectory(dir.slice(cut + 1), parent);
+}
+
+// Only plain relative paths: no empty, "." or ".." segments.
+function safePath(path) {
+  return typeof path === "string" && path.split("/").every(function (part) {
+    return part !== "" && part !== "." && part !== "..";
+  });
+}
+
 function mountJournal(emulator, journal) {
   var encoder = new TextEncoder();
-  var files = journal ? journal.files : [];
+  var files = (journal ? journal.files : []).filter(function (f) { return safePath(f.path); });
   var writes = files.map(function (f) {
-    return emulator.create_file(f.path.replace("/", "__"), encoder.encode(f.text));
+    var cut = f.path.lastIndexOf("/");
+    if (cut > 0) ensureDir(emulator.fs9p, f.path.slice(0, cut));
+    return emulator.create_file(f.path, encoder.encode(f.text));
   });
   writes.push(emulator.create_file("README.txt", encoder.encode(readme(files.length))));
 
@@ -172,8 +191,7 @@ function mountJournal(emulator, journal) {
     emulator.serial0_send(
       // The buildroot image already mounts host9p on /mnt; mount only if not.
       "(grep -q ' /mnt 9p' /proc/mounts || mount -t 9p -o trans=virtio,version=9p2000.L host9p /mnt)" +
-      " && ln -sfn /mnt /journal && cd /journal" +
-      " && for f in *__*; do d=${f%%__*}; mkdir -p \"$d\"; mv \"$f\" \"$d/${f#*__}\"; done;" +
+      " && ln -sfn /mnt /journal && cd /journal;" +
       " stty rows " + rows + " cols " + COLS + ";" +
       " alias exit='echo \"back to the journal: " + JOURNAL_URL + "\"';" +
       " clear; cat README.txt\n"
