@@ -4,7 +4,7 @@ A real Linux booting in the browser, with the
 [McAmner Journal](https://mcamner.github.io/mcamner-journal/) mounted as
 plain text files. Opened from the journal's prompt with `/linux`.
 
-Live: https://mcamner.github.io/mcamner-linux/
+Live: <https://mcamner.github.io/mcamner-linux/>
 
 ## How it works
 
