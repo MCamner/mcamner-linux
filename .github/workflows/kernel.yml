@@ -1,0 +1,64 @@
+name: kernel
+
+# Builds the guest kernel image from buildroot/ and publishes it as a release
+# together with its complete corresponding source (Buildroot `legal-info`).
+# The binary in vendor/ is copied from such a release, so the source for every
+# kernel this site serves is downloadable from the same repository.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+env:
+  BR_VERSION: "2026.02.3"
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build dependencies
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends cpio rsync bc file wget unzip
+
+      - name: Fetch Buildroot
+        run: |
+          git clone --depth 1 --branch "$BR_VERSION" https://gitlab.com/buildroot.org/buildroot.git br
+          cp -r buildroot br/board/mcamner
+
+      - name: Configure
+        working-directory: br
+        run: make BR2_DEFCONFIG=board/mcamner/defconfig defconfig
+
+      - name: Build
+        working-directory: br
+        run: make -j"$(nproc)"
+
+      - name: Collect sources and licenses
+        working-directory: br
+        run: make legal-info
+
+      - name: Package
+        run: |
+          mkdir out
+          cp br/output/images/bzImage out/mcamner-bzimage.bin
+          cp buildroot/defconfig out/defconfig
+          cp br/output/build/linux-*/.config out/linux.config
+          tar -C br/output -cf out/legal-info.tar legal-info
+          cd out && sha256sum * > SHA256SUMS && cat SHA256SUMS && ls -l
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="kernel-${BR_VERSION}-${GITHUB_RUN_NUMBER}"
+          gh release create "$tag" out/* \
+            --title "$tag" \
+            --notes "Guest kernel for mcamner-linux, built by run ${GITHUB_RUN_ID} from commit ${GITHUB_SHA} with Buildroot ${BR_VERSION}.
+
+          - mcamner-bzimage.bin: the image served in vendor/v86/
+          - legal-info.tar: complete corresponding source (every package tarball and patch), license texts and manifests, from \`make legal-info\`
+          - defconfig, linux.config: the Buildroot and kernel configuration"

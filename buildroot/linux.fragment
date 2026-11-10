@@ -1,0 +1,13 @@
+# On top of board/qemu/x86/linux.config: 9p over virtio for the journal,
+# serial console built in, everything v86 does not emulate left out.
+CONFIG_NET_9P=y
+CONFIG_NET_9P_VIRTIO=y
+CONFIG_9P_FS=y
+CONFIG_9P_FS_POSIX_ACL=y
+CONFIG_CMDLINE_BOOL=y
+CONFIG_CMDLINE="console=ttyS0"
+CONFIG_KERNEL_XZ=y
+# CONFIG_MODULES is not set
+# CONFIG_SOUND is not set
+# CONFIG_DRM is not set
+# CONFIG_USB_SUPPORT is not set
