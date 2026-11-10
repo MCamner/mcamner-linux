@@ -1,4 +1,5 @@
-# Local editor and agent settings
+# Local editor and agent settings; project skills are tracked
 .cursor/
 .mcp.json
-.claude/
+.claude/*
+!.claude/skills/
