@@ -9,7 +9,7 @@ from a CDN at runtime. Checksums are in `SHA256SUMS`.
 | `v86/v86.wasm` | 2 007 347 | same release | BSD-2-Clause, see `v86/LICENSE` |
 | `v86/seabios.bin` | 131 072 | `bios/seabios.bin` in copy/v86 at `315b2b0b` | LGPL-3.0, see `v86/COPYING.LESSER`. Source: [SeaBIOS](https://www.seabios.org/); build config `bios/seabios.config` and `bios/fetch-and-build-seabios.sh` in copy/v86 |
 | `v86/vgabios.bin` | 36 352 | `bios/vgabios.bin` in copy/v86 at `315b2b0b` | LGPL, see `v86/COPYING.LESSER`. Built by the same script as SeaBIOS |
-| `v86/mcamner-bzimage.bin` | 5 927 424 | Built in this repository from `buildroot/` by `.github/workflows/kernel.yml`, release [`kernel-2026.02.3-5-defconfig-nossp`](https://github.com/MCamner/mcamner-linux/releases/tag/kernel-2026.02.3-5-defconfig-nossp) (run 42741854415, commit `3ec7fbc`). Linux 6.18.7 with an embedded Buildroot 2026.02.3 root filesystem (BusyBox, musl) | GPL-2.0 (kernel, BusyBox), MIT (musl) and others. Full list and source: see below |
+| `v86/mcamner-bzimage.bin` | 5 927 424 | Built in this repository from `buildroot/` by `.github/workflows/kernel.yml`, release [`kernel-2026.02.3-6-defconfig`](https://github.com/MCamner/mcamner-linux/releases/tag/kernel-2026.02.3-6-defconfig) (run 42906878650, commit `831642b`, from `buildroot/defconfig` as it is in this repository). Linux 6.18.7 with an embedded Buildroot 2026.02.3 root filesystem (BusyBox, musl) | GPL-2.0 (kernel, BusyBox), MIT (musl) and others. Full list and source: see below |
 | `xterm/xterm.js`, `xterm/xterm.css` | 488 663, 7 112 | npm `@xterm/xterm@6.0.0` | MIT, see `xterm/LICENSE` |
 
 ## Source for the kernel image
