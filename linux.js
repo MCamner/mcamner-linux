@@ -148,7 +148,10 @@ function start(journal) {
     tail = (tail + String.fromCharCode(byte)).slice(-16);
     if (!tail.endsWith(PROMPT)) return;
     mounted = true;
-    mountJournal(emulator, journal).then(function () {
+    // Off v86's I/O call stack, and any throw lands in the error handler.
+    Promise.resolve().then(function () {
+      return mountJournal(emulator, journal);
+    }).then(function () {
       status("ready. type below; the journal is in /journal.");
       if (term) term.focus();
     }, function () {
@@ -201,5 +204,6 @@ function mountJournal(emulator, journal) {
 
 fetch(TEXT_URL)
   .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+  .then(function (j) { if (!j || !Array.isArray(j.files)) throw new Error("no files"); return j; })
   .catch(function () { return null; })
   .then(start);
