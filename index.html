@@ -68,6 +68,8 @@
       padding: 6px;
     }
     #term .xterm { height: 100%; }
+    /* xterm paints the viewport black below the last row. */
+    #term .xterm-viewport { background-color: var(--term) !important; }
     /* On the container, not .xterm: #term clips its children. */
     #term:focus-within { outline: 2px solid var(--orange); outline-offset: 2px; }
     footer {
