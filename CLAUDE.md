@@ -20,6 +20,13 @@ around vendor behaviour in `linux.js` and say why in a comment.
 - **The fragment is never a command.** Only an exact journal path without
   quotes is passed to the guest shell.
 
+- **Guest to page: OSC 7337.** `journal.sh` prints `ESC ] 7337 ; open ;
+  <path> BEL` and `... ; theme ; <name> BEL`; `onGuestCommand` in
+  `linux.js` handles them. Anything in the guest can print these, `cat` of
+  a file included, so the page must keep acting only on an exact journal
+  path or one of the journal's four themes. Never add a command that runs
+  code, fetches, or navigates to a URL taken from the guest.
+
 ## Known vendor behaviour
 
 Recheck these when updating `vendor/v86` or `vendor/xterm`:

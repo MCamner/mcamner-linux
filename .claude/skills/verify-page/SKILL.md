@@ -40,6 +40,14 @@ the page, `statusEl`, `term` and `termEl` are globals:
   the UTF-8 decoding in `JournalTerminal` is broken.
 - A fragment that is not an exact journal path, for example one containing
   `';echo PWNED;'`, boots normally and never prints `PWNED`.
+- `journal open stalker` sets `location.hash` to `#films/006-stalker.txt`;
+  `journal random` and `journal latest` work; `/journal` has no
+  `.journal.sh` left in it.
+- `theme amber` sets `document.documentElement.dataset.theme` and
+  `localStorage["mcj:theme"]`; `theme default` clears the attribute. A
+  printed fake sequence, e.g.
+  `printf '\033]7337;open;../../etc/passwd\007'`, or `theme pink` changes
+  nothing.
 - The browser console shows no exceptions for this port.
 
 ## 3. Prove which binary loaded

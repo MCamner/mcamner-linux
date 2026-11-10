@@ -5,8 +5,12 @@
 
 var JOURNAL_URL = "https://mcamner.github.io/mcamner-journal/";
 var TEXT_URL = "/mcamner-journal/journal-text.json"; // same origin, see README
+var SCRIPT_URL = "journal.sh"; // installed in the guest as journal and theme
 var PROMPT = "~% ";
 var COLS = 80;
+var OSC_ID = 7337; // journal.sh -> page, see onGuestCommand
+var THEMES = ["default", "amber", "green", "mono"]; // as in the journal's site.js
+var journalPaths = Object.create(null); // filled by mountJournal
 
 var statusEl = document.getElementById("status");
 var termEl = document.getElementById("term");
@@ -91,7 +95,26 @@ function JournalTerminal(options) {
     if (data instanceof Uint8Array) data = decoder.decode(data, { stream: true });
     return write(data, callback);
   };
+  term.parser.registerOscHandler(OSC_ID, onGuestCommand);
   return term;
+}
+
+// Anything in the guest can print escape sequences, `cat` of a file
+// included, so only an exact journal path or a known theme is acted on.
+function onGuestCommand(data) {
+  var cut = data.indexOf(";");
+  var cmd = cut < 0 ? data : data.slice(0, cut);
+  var arg = cut < 0 ? "" : data.slice(cut + 1);
+  if (cmd === "open" && journalPaths[arg]) {
+    history.replaceState(null, "", "#" + arg);
+    status("opened " + arg + " (q closes it); this page now links to it.");
+  } else if (cmd === "theme" && THEMES.indexOf(arg) !== -1) {
+    // Same key and values as the journal's /theme, so it carries over.
+    if (arg === "default") delete document.documentElement.dataset.theme;
+    else document.documentElement.dataset.theme = arg;
+    try { localStorage.setItem("mcj:theme", arg); } catch (e) {}
+  }
+  return true;
 }
 
 function readme(count) {
@@ -105,6 +128,9 @@ function readme(count) {
     "  cat films/006-*         read an entry",
     "  grep -ril zone .        which entries mention a word",
     "  ls */                   every entry",
+    "  journal random          read a random entry",
+    "  journal open stalker    read an entry; the page URL links to it",
+    "  theme amber             change colours (default, amber, green, mono)",
     "",
     "This is a real Linux kernel running in your browser tab. Nothing",
     "leaves the tab, there is no network, and nothing is saved.",
@@ -113,7 +139,7 @@ function readme(count) {
   ].join("\n");
 }
 
-function start(journal) {
+function start(journal, script) {
   if (typeof WebAssembly !== "object") {
     status("this browser has no WebAssembly, so Linux cannot run here.", true);
     return;
@@ -158,7 +184,7 @@ function start(journal) {
     mounted = true;
     // Off v86's I/O call stack, and any throw lands in the error handler.
     Promise.resolve().then(function () {
-      return mountJournal(emulator, journal);
+      return mountJournal(emulator, journal, script);
     }).then(function (entry) {
       status(entry
         ? "ready. opened " + entry + " (q closes it); the journal is in /journal."
@@ -198,16 +224,19 @@ function linkedEntry(files) {
   return files.some(function (f) { return f.path === path; }) ? path : null;
 }
 
-function mountJournal(emulator, journal) {
+function mountJournal(emulator, journal, script) {
   var encoder = new TextEncoder();
   var files = (journal ? journal.files : []).filter(function (f) { return safePath(f.path); });
   var entry = linkedEntry(files);
   var writes = files.map(function (f) {
+    journalPaths[f.path] = true;
     var cut = f.path.lastIndexOf("/");
     if (cut > 0) ensureDir(emulator.fs9p, f.path.slice(0, cut));
     return emulator.create_file(f.path, encoder.encode(f.text));
   });
   writes.push(emulator.create_file("README.txt", encoder.encode(readme(files.length))));
+  // journal.sh goes in as a dotfile and is moved out of /journal on install.
+  if (script) writes.push(emulator.create_file(".journal.sh", encoder.encode(script)));
 
   return Promise.all(writes).then(function () {
     var rows = term ? term.rows : 24;
@@ -215,6 +244,10 @@ function mountJournal(emulator, journal) {
       // The buildroot image already mounts host9p on /mnt; mount only if not.
       "(grep -q ' /mnt 9p' /proc/mounts || mount -t 9p -o trans=virtio,version=9p2000.L host9p /mnt)" +
       " && ln -sfn /mnt /journal && cd /journal;" +
+      (script
+        ? " cp /mnt/.journal.sh /usr/bin/journal && chmod 755 /usr/bin/journal" +
+          " && ln -sf journal /usr/bin/theme && rm /mnt/.journal.sh;"
+        : "") +
       " stty rows " + rows + " cols " + COLS + ";" +
       " alias exit='echo \"back to the journal: " + JOURNAL_URL + "\"';" +
       // A linked entry opens in less; quitting it leaves the README and prompt.
@@ -224,8 +257,16 @@ function mountJournal(emulator, journal) {
   });
 }
 
-fetch(TEXT_URL)
+var journalLoad = fetch(TEXT_URL)
   .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
   .then(function (j) { if (!j || !Array.isArray(j.files)) throw new Error("no files"); return j; })
-  .catch(function () { return null; })
-  .then(start);
+  .catch(function () { return null; });
+
+// Without the script Linux still boots; only the journal command is missing.
+var scriptLoad = fetch(SCRIPT_URL)
+  .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+  .catch(function () { return null; });
+
+Promise.all([journalLoad, scriptLoad]).then(function (loaded) {
+  start(loaded[0], loaded[1]);
+});

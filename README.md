@@ -26,6 +26,12 @@ Live: <https://mcamner.github.io/mcamner-linux/>
   and opens that entry in `less`; `q` leaves the shell in `/journal`. Only
   a path that exists in the journal is accepted, never a command; anything
   else boots as usual.
+- In the guest, `journal open <word>`, `journal random` and `journal latest`
+  read entries, and `theme amber` (or `default`, `green`, `mono`) changes
+  the page's colours. They talk to the page with an OSC 7337 escape
+  sequence: opening an entry puts its link in the address bar, and the
+  theme is saved under the journal's `mcj:theme`, so it carries over. The
+  page acts only on an exact journal path or one of those four themes.
 
 Everything runs in the visitor's tab. There is no network inside the guest,
 no backend, and nothing is saved between visits.
@@ -52,5 +58,7 @@ only the README.
 
 - `index.html`: the page.
 - `linux.js`: boot, progress, writing the journal into 9p, mounting.
+- `journal.sh`: the guest's `journal` and `theme` commands. The page writes
+  it into 9p and installs it at boot, so changing it needs no kernel build.
 - `vendor/`: v86, BIOS, kernel image and xterm.js. Sources, licenses and how
   to update them are in [vendor/LICENSES.md](vendor/LICENSES.md).
