@@ -14,13 +14,17 @@ entries() { (cd "$J" && ls -1 -- */*.txt 2>/dev/null); }
 usage() {
 	cat <<'EOF'
 journal open <path or word>  read an entry; the page URL links to it
+journal web <path or word>   link to the entry on the journal site
 journal random               read a random entry
 journal latest               the newest entry of each type
 theme <default|amber|green|mono>
 EOF
 }
 
-open_entry() {
+URLS=/usr/share/journal/urls
+
+# Prints the one entry matching $1, or explains on stderr and fails.
+resolve_entry() {
 	# An exact path wins; otherwise any part of it: stalker, films/006.
 	match=$(entries | grep -Fx -- "$1")
 	[ -n "$match" ] || match=$(entries | grep -F -- "$1")
@@ -34,8 +38,24 @@ open_entry() {
 		printf '%s\n' "$match" | sed 's/^/  /' >&2
 		return 1
 	fi
+	printf '%s\n' "$match"
+}
+
+open_entry() {
+	match=$(resolve_entry "$1") || return 1
 	osc "open;$match"
 	less -- "$J/$match"
+}
+
+# OSC 8 makes the URL clickable; the page opens only journal post URLs.
+web_entry() {
+	match=$(resolve_entry "$1") || return 1
+	url=$(awk -F '\t' -v p="$match" '$1 == p { print $2 }' "$URLS" 2>/dev/null)
+	if [ -z "$url" ]; then
+		echo "journal: no web link for $match" >&2
+		return 1
+	fi
+	printf '\033]8;;%s\033\\%s\033]8;;\033\\\n' "$url" "$url"
 }
 
 [ "${0##*/}" = theme ] && set -- theme "$@"
@@ -44,6 +64,10 @@ case "$1" in
 open)
 	[ -n "$2" ] || { usage >&2; exit 2; }
 	open_entry "$2"
+	;;
+web)
+	[ -n "$2" ] || { usage >&2; exit 2; }
+	web_entry "$2"
 	;;
 random)
 	total=$(entries | grep -c .)

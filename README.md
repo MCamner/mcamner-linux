@@ -32,6 +32,9 @@ Live: <https://mcamner.github.io/mcamner-linux/>
   sequence: opening an entry puts its link in the address bar, and the
   theme is saved under the journal's `mcj:theme`, so it carries over. The
   page acts only on an exact journal path or one of those four themes.
+- `journal web <word>` prints a clickable link to the entry on the journal
+  site, from the `url` field in `journal-text.json`. The page opens a link
+  from the terminal only when it is one of those post URLs.
 
 Everything runs in the visitor's tab. There is no network inside the guest,
 no backend, and nothing is saved between visits.

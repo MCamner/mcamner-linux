@@ -11,6 +11,7 @@ var COLS = 80;
 var OSC_ID = 7337; // journal.sh -> page, see onGuestCommand
 var THEMES = ["default", "amber", "green", "mono"]; // as in the journal's site.js
 var journalPaths = Object.create(null); // filled by mountJournal
+var journalUrls = Object.create(null); // post URLs `journal web` may link to
 
 var statusEl = document.getElementById("status");
 var termEl = document.getElementById("term");
@@ -71,6 +72,13 @@ function JournalTerminal(options) {
     lineHeight: 1.2,
     fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
     cursorBlink: true,
+    // OSC 8 links (journal web). Anything in the guest can print one, so only
+    // a journal post URL from journal-text.json opens, in a new tab.
+    linkHandler: {
+      activate: function (event, uri) {
+        if (journalUrls[uri]) window.open(uri, "_blank", "noopener");
+      }
+    },
     theme: {
       background: "#123b80",
       foreground: "#f7f3ed",
@@ -129,6 +137,7 @@ function readme(count) {
     "  grep -ril zone .        which entries mention a word",
     "  ls */                   every entry",
     "  journal random          read a random entry",
+    "  journal web stalker     link to the entry on the journal site",
     "  journal open stalker    read an entry; the page URL links to it",
     "  theme amber             change colours (default, amber, green, mono)",
     "",
@@ -228,8 +237,14 @@ function mountJournal(emulator, journal, script) {
   var encoder = new TextEncoder();
   var files = (journal ? journal.files : []).filter(function (f) { return safePath(f.path); });
   var entry = linkedEntry(files);
+  var urlRows = "";
   var writes = files.map(function (f) {
     journalPaths[f.path] = true;
+    // Only the journal's own pages, and nothing that could break a TSV row.
+    if (typeof f.url === "string" && f.url.indexOf(JOURNAL_URL) === 0 && !/[\s\x00-\x1f]/.test(f.url)) {
+      journalUrls[f.url] = true;
+      urlRows += f.path + "\t" + f.url + "\n";
+    }
     var cut = f.path.lastIndexOf("/");
     if (cut > 0) ensureDir(emulator.fs9p, f.path.slice(0, cut));
     return emulator.create_file(f.path, encoder.encode(f.text));
@@ -237,6 +252,7 @@ function mountJournal(emulator, journal, script) {
   writes.push(emulator.create_file("README.txt", encoder.encode(readme(files.length))));
   // journal.sh goes in as a dotfile and is moved out of /journal on install.
   if (script) writes.push(emulator.create_file(".journal.sh", encoder.encode(script)));
+  writes.push(emulator.create_file(".journal-urls", encoder.encode(urlRows)));
 
   return Promise.all(writes).then(function () {
     var rows = term ? term.rows : 24;
@@ -248,6 +264,8 @@ function mountJournal(emulator, journal, script) {
         ? " cp /mnt/.journal.sh /usr/bin/journal && chmod 755 /usr/bin/journal" +
           " && ln -sf journal /usr/bin/theme && rm /mnt/.journal.sh;"
         : "") +
+      " mkdir -p /usr/share/journal && cp /mnt/.journal-urls /usr/share/journal/urls" +
+      " && rm /mnt/.journal-urls;" +
       " stty rows " + rows + " cols " + COLS + ";" +
       " alias exit='echo \"back to the journal: " + JOURNAL_URL + "\"';" +
       // A linked entry opens in less; quitting it leaves the README and prompt.

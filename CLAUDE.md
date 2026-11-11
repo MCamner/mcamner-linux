@@ -26,6 +26,11 @@ around vendor behaviour in `linux.js` and say why in a comment.
   a file included, so the page must keep acting only on an exact journal
   path or one of the journal's four themes. Never add a command that runs
   code, fetches, or navigates to a URL taken from the guest.
+- **Terminal links: OSC 8.** `journal web` prints a post's `url` from
+  `journal-text.json` as an OSC 8 link. xterm.js would otherwise ask with
+  `confirm()` and open any URL; the `linkHandler` in `linux.js` opens only
+  URLs in `journalUrls` (under the journal's own address), in a new tab.
+  Without `url` in the JSON, `journal web` reports that no link exists.
 
 ## Known vendor behaviour
 

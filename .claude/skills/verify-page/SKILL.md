@@ -48,6 +48,11 @@ the page, `statusEl`, `term` and `termEl` are globals:
   printed fake sequence, e.g.
   `printf '\033]7337;open;../../etc/passwd\007'`, or `theme pink` changes
   nothing.
+- `journal web stalker` prints the post URL as a link. Replace
+  `window.open` with a recorder before clicking: the journal link opens
+  once with `noopener`; a printed fake link,
+  `printf '\033]8;;https://evil.example/\033\\x\033]8;;\033\\\n'`, opens
+  nothing and no `confirm()` dialog appears.
 - The browser console shows no exceptions for this port.
 
 ## 3. Prove which binary loaded
