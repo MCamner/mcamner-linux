@@ -195,9 +195,9 @@ function start(journal, script) {
     Promise.resolve().then(function () {
       return mountJournal(emulator, journal, script);
     }).then(function (entry) {
-      status(entry
-        ? "ready. opened " + entry + " (q closes it); the journal is in /journal."
-        : "ready. type below; the journal is in /journal.");
+      if (entry) status("ready. opened " + entry + " (q closes it); the journal is in /journal.");
+      else if (journal) status("ready. type below; the journal is in /journal.");
+      else status("linux is up, but the journal could not be loaded; /journal holds only the README.", true);
       if (term) term.focus();
     }, function () {
       status("linux is up, but the journal could not be mounted.", true);
@@ -217,9 +217,10 @@ function ensureDir(fs, dir) {
   return fs.CreateDirectory(dir.slice(cut + 1), parent);
 }
 
-// Only plain relative paths: no empty, "." or ".." segments.
+// Only plain relative paths: no empty, "." or ".." segments, and no control
+// characters, since a linked path is typed into the guest shell.
 function safePath(path) {
-  return typeof path === "string" && path.split("/").every(function (part) {
+  return typeof path === "string" && !/[\x00-\x1f\x7f]/.test(path) && path.split("/").every(function (part) {
     return part !== "" && part !== "." && part !== "..";
   });
 }
